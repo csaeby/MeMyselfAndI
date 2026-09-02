@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Christian Saeby // Engineering Lead</title>
+  <meta name="description" content="Explore Christian Saeby's interactive 3D CV exhibition hall. Engineering Lead focused on people, technology, delivery, and pragmatic technical leadership." />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+
+  <!-- Preconnect to Three.js CDN -->
+  <link rel="preconnect" href="https://unpkg.com" />
+
+  <!-- Import Maps for Three.js -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+
+  <!-- Modern Styling -->
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+
+  <!-- =====================================================================
+       3D First-Person Experience View
+       ===================================================================== -->
+  <main id="view-3d">
+    <!-- WebGL Three.js Render Target -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD Overlay Layer -->
+    <div class="hud-layer">
+      <!-- Top Navigation Bar -->
+      <nav class="top-bar">
+        <div class="top-left-actions">
+          <button id="toggle-2d-mode-btn" class="hud-btn" aria-label="Switch to 2D CV format">
+            📄 Traditional 2D CV
+          </button>
+        </div>
+
+        <!-- 2D Minimap Radar -->
+        <aside class="minimap-container" aria-label="Gallery Minimap">
+          <span class="minimap-header">Gallery Radar</span>
+          <canvas id="minimap-canvas" width="160" height="160"></canvas>
+        </aside>
+      </nav>
+
+      <!-- Central Crosshair Reticle -->
+      <div id="crosshair" aria-hidden="true"></div>
+
+      <!-- Contextual Interaction Prompt -->
+      <div id="interaction-prompt" role="status" aria-live="polite"></div>
+
+      <!-- Resume Camera Look Prompt -->
+      <div id="resume-prompt" class="resume-prompt">
+        <span>Click anywhere to look around (WASD to walk)</span>
+      </div>
+
+      <!-- Touch-only navigation controls -->
+      <div id="touch-controls" aria-label="Mobile movement controls">
+        <span class="touch-look-hint">Drag the scene to look around</span>
+        <div class="touch-move-pad">
+          <button class="touch-move-btn touch-forward" data-move="forward" aria-label="Move forward">▲</button>
+          <button class="touch-move-btn touch-left" data-move="left" aria-label="Move left">◀</button>
+          <button class="touch-move-btn touch-backward" data-move="backward" aria-label="Move backward">▼</button>
+          <button class="touch-move-btn touch-right" data-move="right" aria-label="Move right">▶</button>
+        </div>
+      </div>
+
+      <!-- Quick Teleport Bottom Dock -->
+      <div class="bottom-dock-container">
+        <div id="quick-travel-dock"></div>
+      </div>
+    </div>
+
+    <!-- Start / Resume Overlay Screen -->
+    <div id="blocker">
+      <div class="welcome-card">
+        <span class="welcome-badge">Interactive 3D Portfolio</span>
+        <h1 class="welcome-title">Christian Saeby</h1>
+        <p class="welcome-subtitle">Engineering Lead | People, Technology & Delivery</p>
+        <p class="welcome-desc">
+          Explore 8 years of experience across people leadership, technical direction, engineering delivery, and hands-on software development with .NET, Azure, and applied AI.
+        </p>
+
+        <div class="controls-grid desktop-controls">
+          <div class="ctrl-item">
+            <span class="ctrl-key">W A S D</span>
+            <span class="ctrl-label">Walk / Move</span>
+          </div>
+          <div class="ctrl-item">
+            <span class="ctrl-key">MOUSE</span>
+            <span class="ctrl-label">Look Around</span>
+          </div>
+          <div class="ctrl-item">
+            <span class="ctrl-key">SHIFT</span>
+            <span class="ctrl-label">Sprint Fast</span>
+          </div>
+          <div class="ctrl-item">
+            <span class="ctrl-key">E / CLICK</span>
+            <span class="ctrl-label">Inspect Station</span>
+          </div>
+          <div class="ctrl-item">
+            <span class="ctrl-key">1 - 4</span>
+            <span class="ctrl-label">Quick Teleport</span>
+          </div>
+        </div>
+
+        <div class="controls-grid mobile-controls">
+          <div class="ctrl-item">
+            <span class="ctrl-key">DRAG</span>
+            <span class="ctrl-label">Look around</span>
+          </div>
+          <div class="ctrl-item">
+            <span class="ctrl-key">PAD</span>
+            <span class="ctrl-label">Walk through the gallery</span>
+          </div>
+          <div class="ctrl-item">
+            <span class="ctrl-key">TAP</span>
+            <span class="ctrl-label">Open a nearby station</span>
+          </div>
+          <div class="ctrl-item">
+            <span class="ctrl-key">DOCK</span>
+            <span class="ctrl-label">Jump directly to a station</span>
+          </div>
+        </div>
+
+        <button id="enter-btn" class="enter-btn">Enter Exhibition</button>
+      </div>
+    </div>
+
+    <!-- Glassmorphic Modal Reader Dialog -->
+    <dialog id="cv-modal" aria-labelledby="modal-header">
+      <div class="modal-inner">
+        <header id="modal-header">
+          <!-- Dynamic Station Header Content -->
+        </header>
+        <button id="modal-close-btn" class="modal-close" aria-label="Close dialog">✕</button>
+        <div id="modal-body">
+          <!-- Dynamic Content Injected Here -->
+        </div>
+      </div>
+    </dialog>
+  </main>
+
+  <!-- =====================================================================
+       Traditional 2D CV View (Accessible & Recruiter Friendly)
+       ===================================================================== -->
+  <section id="view-2d">
+    <div class="cv-container">
+      <div class="cv-top-nav">
+        <button id="back-to-3d-btn" class="hud-btn">🎮 Return to 3D Space</button>
+        <button onclick="window.print()" class="hud-btn">🖨️ Print / Save as PDF</button>
+      </div>
+      <div id="cv-2d-container">
+        <!-- Injected dynamically from cv-data.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Application Bootstrap -->
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
