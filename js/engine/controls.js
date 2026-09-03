@@ -17,6 +17,8 @@ export class FirstPersonController {
     // Movement speeds
     this.walkSpeed = 6.0; // units / sec
     this.sprintSpeed = 10.5;
+    this.jumpSpeed = 7.0;
+    this.gravity = 20.0;
     this.playerRadius = 0.55;
     this.playerHeight = 1.7;
 
@@ -28,6 +30,8 @@ export class FirstPersonController {
     this.moveLeft = false;
     this.moveRight = false;
     this.isSprinting = false;
+    this.verticalVelocity = 0;
+    this.isGrounded = true;
     this.isTouchActive = false;
     this.isModalOpen = false;
     this.hasStarted = false;
@@ -125,7 +129,11 @@ export class FirstPersonController {
     if (this.domElement.requestPointerLock) {
       try {
         const lockRequest = this.domElement.requestPointerLock();
-        lockRequest?.catch(() => this.startTouchMode());
+        lockRequest?.catch(() => {
+          // A resumed desktop session can briefly reject Pointer Lock after
+          // Escape. Only use touch controls when desktop mode never started.
+          if (!this.hasStarted) this.startTouchMode();
+        });
 
         // Some browsers expose the API but silently decline the request.
         window.setTimeout(() => {
@@ -134,7 +142,7 @@ export class FirstPersonController {
           }
         }, 400);
       } catch {
-        this.startTouchMode();
+        if (!this.hasStarted) this.startTouchMode();
       }
     } else {
       this.startTouchMode();
@@ -142,6 +150,10 @@ export class FirstPersonController {
   }
 
   startTouchMode() {
+    // Once Pointer Lock has worked, keep the controller in desktop mode.
+    // This prevents a failed resume attempt from changing the control scheme.
+    if (this.hasStarted && !this.isTouchMode) return;
+
     this.isTouchMode = true;
     this.hasStarted = true;
     document.documentElement.classList.add('touch-mode');
@@ -289,6 +301,18 @@ export class FirstPersonController {
       case 'ShiftRight':
         this.isSprinting = true;
         break;
+      case 'Space':
+        if (
+          !event.repeat &&
+          this.isGrounded &&
+          this.hasStarted &&
+          (this.isLocked || this.isTouchMode)
+        ) {
+          event.preventDefault();
+          this.verticalVelocity = this.jumpSpeed;
+          this.isGrounded = false;
+        }
+        break;
     }
   }
 
@@ -345,8 +369,11 @@ export class FirstPersonController {
 
   teleportTo(x, z, targetAngleY = null) {
     this.camera.position.x = x;
+    this.camera.position.y = this.baseCameraY;
     this.camera.position.z = z;
     this.velocity.set(0, 0, 0);
+    this.verticalVelocity = 0;
+    this.isGrounded = true;
 
     if (targetAngleY !== null) {
       this.euler.x = 0;
@@ -410,19 +437,33 @@ export class FirstPersonController {
       this.velocity.z = 0;
     }
 
+    // Apply a simple vertical jump and gravity, landing at eye level.
+    if (!this.isGrounded) {
+      this.verticalVelocity -= this.gravity * delta;
+      this.camera.position.y += this.verticalVelocity * delta;
+
+      if (this.camera.position.y <= this.baseCameraY) {
+        this.camera.position.y = this.baseCameraY;
+        this.verticalVelocity = 0;
+        this.isGrounded = true;
+      }
+    }
+
     // Head bob
     const isMoving = (this.moveForward || this.moveBackward || this.moveLeft || this.moveRight) &&
                      (Math.abs(this.velocity.x) > 0.4 || Math.abs(this.velocity.z) > 0.4);
 
-    if (isMoving) {
-      const bobFreq = this.isSprinting ? 14 : 10;
-      const bobAmp = this.isSprinting ? 0.06 : 0.035;
-      this.bobTimer += delta * bobFreq;
-      this.camera.position.y = this.baseCameraY + Math.sin(this.bobTimer) * bobAmp;
-
-    } else {
-      // Smoothly return camera to eye level
-      this.camera.position.y += (this.baseCameraY - this.camera.position.y) * 0.15;
+    // Jumping controls the camera height until the player lands.
+    if (this.isGrounded) {
+      if (isMoving) {
+        const bobFreq = this.isSprinting ? 14 : 10;
+        const bobAmp = this.isSprinting ? 0.06 : 0.035;
+        this.bobTimer += delta * bobFreq;
+        this.camera.position.y = this.baseCameraY + Math.sin(this.bobTimer) * bobAmp;
+      } else {
+        // Smoothly return camera to eye level
+        this.camera.position.y += (this.baseCameraY - this.camera.position.y) * 0.15;
+      }
     }
   }
 }
